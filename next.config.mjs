@@ -19,8 +19,6 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   reactStrictMode: true,
-  // Docker / production optimizations
-  output: "standalone",
   poweredByHeader: false,
   compress: true,
 };
