@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.env
+.env.local
+.env.production
+.env*.local
+*.md
+LICENSE
+.vscode
+.idea
+coverage
+.turbo
