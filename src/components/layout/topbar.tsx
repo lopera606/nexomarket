@@ -8,6 +8,8 @@ import {
   Store, ChevronRight, Globe, Heart, LogOut, LogIn, UserPlus,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useCart } from '@/hooks/useCart'
+import { useNotifications } from '@/hooks/useNotifications'
 
 const LANGUAGES = [
   { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -26,6 +28,8 @@ export default function Topbar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isLoggedIn, logout, isLoading: authLoading } = useAuth()
+  const { totalItems: cartCount } = useCart()
+  const { unreadCount: notifCount } = useNotifications()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
@@ -288,17 +292,21 @@ export default function Topbar() {
               {/* Bell */}
               <Link href={localePath('/mi-cuenta/notificaciones')} className="relative p-2.5 rounded-2xl hover:bg-gray-50 transition-all duration-200">
                 <Bell className="w-5 h-5 text-[#4A4A4A]" />
-                <span className="absolute top-1 right-1 w-4 h-4 bg-[#0066FF] rounded-full flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white">3</span>
-                </span>
+                {notifCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-[#0066FF] rounded-full flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-white">{notifCount > 9 ? '9+' : notifCount}</span>
+                  </span>
+                )}
               </Link>
 
               {/* Cart */}
               <Link href={localePath('/carrito')} className="relative p-2.5 rounded-2xl hover:bg-gray-50 transition-all duration-200">
                 <ShoppingCart className="w-5 h-5 text-[#4A4A4A]" />
-                <span className="absolute top-0.5 right-0.5 w-[18px] h-[18px] bg-[#0066FF] rounded-full flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white">2</span>
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 w-[18px] h-[18px] bg-[#0066FF] rounded-full flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-white">{cartCount > 9 ? '9+' : cartCount}</span>
+                  </span>
+                )}
               </Link>
             </div>
           </div>
