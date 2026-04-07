@@ -1,184 +1,9 @@
 'use client';
 
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Store, Package, AlertCircle, CheckCircle, XCircle, BarChart3, Clock, Activity, Star, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Store, Package, AlertCircle, CheckCircle, XCircle, BarChart3, Clock, Activity, Star, Zap, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const STATS = [
-  {
-    label: 'GMV',
-    value: '€245,890',
-    change: '+18%',
-    icon: DollarSign,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #5B2FE8 0%, #7C3AED 100%)',
-  },
-  {
-    label: 'Comisiones',
-    value: '€14,753',
-    change: '+15%',
-    icon: TrendingUp,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #FF6B35 0%, #FF8555 100%)',
-  },
-  {
-    label: 'Pedidos',
-    value: '1,847',
-    change: '+22%',
-    icon: ShoppingCart,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-  },
-  {
-    label: 'Usuarios',
-    value: '12,450',
-    change: '+8%',
-    icon: Users,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-  },
-  {
-    label: 'Tiendas',
-    value: '342',
-    change: '+5%',
-    icon: Store,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%)',
-  },
-  {
-    label: 'Productos',
-    value: '28,900',
-    change: '+12%',
-    icon: Package,
-    trend: 'up',
-    gradient: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
-  },
-];
-
-const REVENUE_DATA = [
-  { month: 'Ene', value: 28000 },
-  { month: 'Feb', value: 35000 },
-  { month: 'Mar', value: 32000 },
-  { month: 'Abr', value: 42000 },
-  { month: 'May', value: 45000 },
-  { month: 'Jun', value: 52000 },
-  { month: 'Jul', value: 48000 },
-  { month: 'Ago', value: 55000 },
-  { month: 'Sep', value: 58000 },
-  { month: 'Oct', value: 62000 },
-  { month: 'Nov', value: 68000 },
-  { month: 'Dic', value: 75000 },
-];
-
-const PENDING_STORES = [
-  {
-    id: 1,
-    name: 'TechWorld Store',
-    owner: 'David Chen',
-    appliedDate: '2026-03-10',
-    category: 'Electrónica',
-  },
-  {
-    id: 2,
-    name: 'Fashion Hub',
-    owner: 'Sofia Martinez',
-    appliedDate: '2026-03-11',
-    category: 'Ropa',
-  },
-  {
-    id: 3,
-    name: 'Sports Gear Co',
-    owner: 'James Wilson',
-    appliedDate: '2026-03-12',
-    category: 'Deportes',
-  },
-];
-
-const RECENT_ACTIVITY = [
-  {
-    id: 1,
-    type: 'store_registered',
-    title: 'Nueva tienda registrada',
-    description: 'TechPro Electronics',
-    time: 'hace 2 horas',
-    dotColor: '#5B2FE8',
-  },
-  {
-    id: 2,
-    type: 'order_completed',
-    title: 'Pedido completado',
-    description: 'Orden #4521 - €1,250',
-    time: 'hace 4 horas',
-    dotColor: '#10B981',
-  },
-  {
-    id: 3,
-    type: 'user_joined',
-    title: 'Nuevo usuario',
-    description: 'María García se registró',
-    time: 'hace 6 horas',
-    dotColor: '#FF6B35',
-  },
-  {
-    id: 4,
-    type: 'store_approved',
-    title: 'Tienda aprobada',
-    description: 'Fashion Boutique activada',
-    time: 'hace 8 horas',
-    dotColor: '#10B981',
-  },
-  {
-    id: 5,
-    type: 'payment_received',
-    title: 'Comisión recibida',
-    description: '€3,450 de SportWorld',
-    time: 'hace 10 horas',
-    dotColor: '#5B2FE8',
-  },
-];
-
-const TOP_STORES = [
-  {
-    id: 1,
-    rank: 1,
-    name: 'TechPro Store',
-    revenue: '€24,500',
-    orders: 342,
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    rank: 2,
-    name: 'Fashion Hub',
-    revenue: '€32,100',
-    orders: 521,
-    rating: 4.7,
-  },
-  {
-    id: 3,
-    rank: 3,
-    name: 'SportGear Co',
-    revenue: '€18,200',
-    orders: 278,
-    rating: 4.6,
-  },
-  {
-    id: 4,
-    rank: 4,
-    name: 'AudioMax',
-    revenue: '€15,800',
-    orders: 198,
-    rating: 4.9,
-  },
-  {
-    id: 5,
-    rank: 5,
-    name: 'ElectroWorld',
-    revenue: '€28,600',
-    orders: 445,
-    rating: 4.5,
-  },
-];
 
 const PLATFORM_HEALTH = [
   { metric: 'API', value: '99.98%', status: 'good' },
@@ -186,8 +11,6 @@ const PLATFORM_HEALTH = [
   { metric: 'Pagos', value: '99.99%', status: 'good' },
   { metric: 'Envíos', value: '99.92%', status: 'good' },
 ];
-
-const maxRevenue = Math.max(...REVENUE_DATA.map((d) => d.value));
 
 const getMedalEmoji = (rank: number) => {
   if (rank === 1) return '🥇';
@@ -202,12 +25,123 @@ const getHealthColor = (status: string) => {
   return 'bg-gradient-to-br from-red-400 to-rose-500';
 };
 
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
+};
+
+const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('es-ES').format(value);
+};
+
+interface DashboardData {
+  stats: {
+    gmv: { value: number; change: number };
+    commissions: { value: number; change: number };
+    orders: { value: number; change: number };
+    users: { value: number; change: number };
+    stores: { value: number; change: number };
+    products: { value: number; change: number };
+  };
+  revenueChart: { month: string; value: number }[];
+  revenueSummary: { total: number; average: number; peak: number };
+  pendingStores: { id: string; name: string; owner: string; appliedDate: string }[];
+  recentActivity: { id: string; type: string; title: string; description: string; time: string; dotColor: string }[];
+  topStores: { id: string; rank: number; name: string; revenue: number; orders: number; rating: number }[];
+}
+
 export default function AdminDashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/dashboard')
+      .then((r) => {
+        if (!r.ok) throw new Error('Error al cargar datos');
+        return r.json();
+      })
+      .then(setData)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   const today = new Date().toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#0066FF' }} />
+          <p className="text-sm" style={{ color: '#4A4A4A' }}>Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-semibold" style={{ color: '#000000' }}>Error al cargar el dashboard</p>
+          <p className="text-sm mt-2" style={{ color: '#4A4A4A' }}>{error || 'No se pudieron obtener los datos'}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4" style={{ backgroundColor: '#0066FF', color: 'white' }}>
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const STATS = [
+    {
+      label: 'GMV',
+      value: formatCurrency(data.stats.gmv.value),
+      change: `${data.stats.gmv.change >= 0 ? '+' : ''}${data.stats.gmv.change}%`,
+      icon: DollarSign,
+      trend: data.stats.gmv.change >= 0 ? 'up' : 'down',
+    },
+    {
+      label: 'Comisiones',
+      value: formatCurrency(data.stats.commissions.value),
+      change: `${data.stats.commissions.change >= 0 ? '+' : ''}${data.stats.commissions.change}%`,
+      icon: TrendingUp,
+      trend: data.stats.commissions.change >= 0 ? 'up' : 'down',
+    },
+    {
+      label: 'Pedidos',
+      value: formatNumber(data.stats.orders.value),
+      change: `${data.stats.orders.change >= 0 ? '+' : ''}${data.stats.orders.change}%`,
+      icon: ShoppingCart,
+      trend: data.stats.orders.change >= 0 ? 'up' : 'down',
+    },
+    {
+      label: 'Usuarios',
+      value: formatNumber(data.stats.users.value),
+      change: `${data.stats.users.change >= 0 ? '+' : ''}${data.stats.users.change}%`,
+      icon: Users,
+      trend: data.stats.users.change >= 0 ? 'up' : 'down',
+    },
+    {
+      label: 'Tiendas',
+      value: formatNumber(data.stats.stores.value),
+      change: `${data.stats.stores.change >= 0 ? '+' : ''}${data.stats.stores.change}%`,
+      icon: Store,
+      trend: data.stats.stores.change >= 0 ? 'up' : 'down',
+    },
+    {
+      label: 'Productos',
+      value: formatNumber(data.stats.products.value),
+      change: `${data.stats.products.change >= 0 ? '+' : ''}${data.stats.products.change}%`,
+      icon: Package,
+      trend: data.stats.products.change >= 0 ? 'up' : 'down',
+    },
+  ];
+
+  const maxRevenue = Math.max(...data.revenueChart.map((d) => d.value), 1);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-6 lg:p-8">
@@ -231,7 +165,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Pending Approvals Alert Banner */}
-      {PENDING_STORES.length > 0 && (
+      {data.pendingStores.length > 0 && (
         <div className="mb-8 rounded-2xl bg-amber-50 border border-amber-200 p-6" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-amber-100 p-3 flex-shrink-0">
@@ -239,7 +173,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-amber-900 text-lg">
-                {PENDING_STORES.length} tiendas pendientes de aprobación
+                {data.pendingStores.length} tienda{data.pendingStores.length !== 1 ? 's' : ''} pendiente{data.pendingStores.length !== 1 ? 's' : ''} de aprobación
               </h3>
               <p className="mt-1 text-sm text-amber-800">
                 Revisa y aprueba las nuevas tiendas que están esperando verificación
@@ -308,26 +242,20 @@ export default function AdminDashboardPage() {
 
             {/* CSS Bar Chart */}
             <div className="flex h-48 sm:h-64 items-end justify-between gap-1 sm:gap-2 overflow-x-auto pb-2">
-              {REVENUE_DATA.map((data, idx) => {
-                const gradients = [
-                  '#0066FF',
-                  '#0052CC',
-                  '#0066FF',
-                ];
-                const gradient = gradients[idx % 3];
+              {data.revenueChart.map((d, idx) => {
                 return (
-                  <div key={data.month} className="flex flex-col items-center gap-2 flex-shrink-0" style={{ minWidth: '2rem' }}>
+                  <div key={d.month} className="flex flex-col items-center gap-2 flex-shrink-0" style={{ minWidth: '2rem' }}>
                     <div className="relative h-40 sm:h-48 w-6 sm:w-8">
                       <div
                         className="absolute bottom-0 w-full rounded-t-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:brightness-110"
                         style={{
-                          height: `${(data.value / maxRevenue) * 100}%`,
-                          background: gradient,
+                          height: `${maxRevenue > 0 ? (d.value / maxRevenue) * 100 : 0}%`,
+                          background: '#0066FF',
                         }}
-                        title={`€${data.value.toLocaleString()}`}
+                        title={formatCurrency(d.value)}
                       />
                     </div>
-                    <span className="text-[10px] sm:text-xs font-semibold text-gray-400 whitespace-nowrap">{data.month}</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-gray-400 whitespace-nowrap">{d.month}</span>
                   </div>
                 );
               })}
@@ -336,15 +264,15 @@ export default function AdminDashboardPage() {
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-gray-200 pt-6">
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Total</p>
-                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">€645,000</p>
+                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(data.revenueSummary.total)}</p>
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Promedio</p>
-                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">€53,750</p>
+                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(data.revenueSummary.average)}</p>
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Pico</p>
-                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">€75,000</p>
+                <p className="mt-2 text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(data.revenueSummary.peak)}</p>
               </div>
             </div>
           </div>
@@ -386,26 +314,30 @@ export default function AdminDashboardPage() {
             <Clock className="h-6 w-6 text-[#0066FF]" />
           </div>
 
-          <div className="space-y-6">
-            {RECENT_ACTIVITY.map((activity, idx) => (
-              <div key={activity.id} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div
-                    className="h-4 w-4 rounded-full shadow-lg"
-                    style={{ backgroundColor: activity.dotColor }}
-                  />
-                  {idx !== RECENT_ACTIVITY.length - 1 && (
-                    <div className="mt-2 h-8 w-0.5 bg-gray-200" />
-                  )}
+          {data.recentActivity.length === 0 ? (
+            <p className="text-sm text-center py-8" style={{ color: '#4A4A4A' }}>No hay actividad reciente</p>
+          ) : (
+            <div className="space-y-6">
+              {data.recentActivity.map((activity, idx) => (
+                <div key={activity.id} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="h-4 w-4 rounded-full shadow-lg"
+                      style={{ backgroundColor: activity.dotColor }}
+                    />
+                    {idx !== data.recentActivity.length - 1 && (
+                      <div className="mt-2 h-8 w-0.5 bg-gray-200" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-2">
+                    <p className="text-sm font-semibold text-gray-900">{activity.title}</p>
+                    <p className="text-sm text-gray-600">{activity.description}</p>
+                    <p className="mt-1 text-xs text-gray-500">{activity.time}</p>
+                  </div>
                 </div>
-                <div className="flex-1 pb-2">
-                  <p className="text-sm font-semibold text-gray-900">{activity.title}</p>
-                  <p className="text-sm text-gray-600">{activity.description}</p>
-                  <p className="mt-1 text-xs text-gray-500">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Top Stores Leaderboard */}
@@ -415,44 +347,48 @@ export default function AdminDashboardPage() {
             <Zap className="h-6 w-6 text-amber-500" />
           </div>
 
-          <div className="space-y-3">
-            {TOP_STORES.map((store) => (
-              <div
-                key={store.id}
-                className="rounded-2xl bg-gray-50 border border-gray-200 p-4 transition-all duration-300 hover:shadow-lg group cursor-pointer"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-                    <div className="text-lg sm:text-2xl flex-shrink-0">{getMedalEmoji(store.rank)}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-sm sm:text-base truncate">{store.name}</p>
-                      <div className="mt-2 flex items-center justify-between text-[10px] sm:text-xs gap-1 flex-wrap">
-                        <span className="text-gray-600 whitespace-nowrap">{store.orders} ped.</span>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${
-                                i < Math.floor(store.rating)
-                                  ? 'fill-amber-400 text-amber-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-1 text-xs font-semibold text-gray-600">
-                            {store.rating}
-                          </span>
+          {data.topStores.length === 0 ? (
+            <p className="text-sm text-center py-8" style={{ color: '#4A4A4A' }}>No hay datos de tiendas</p>
+          ) : (
+            <div className="space-y-3">
+              {data.topStores.map((store) => (
+                <div
+                  key={store.id}
+                  className="rounded-2xl bg-gray-50 border border-gray-200 p-4 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                      <div className="text-lg sm:text-2xl flex-shrink-0">{getMedalEmoji(store.rank)}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm sm:text-base truncate">{store.name}</p>
+                        <div className="mt-2 flex items-center justify-between text-[10px] sm:text-xs gap-1 flex-wrap">
+                          <span className="text-gray-600 whitespace-nowrap">{store.orders} ped.</span>
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-3 w-3 ${
+                                  i < Math.floor(store.rating)
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                            <span className="ml-1 text-xs font-semibold text-gray-600">
+                              {store.rating.toFixed(1)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-bold text-gray-900 text-sm sm:text-lg whitespace-nowrap">{store.revenue}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-gray-900 text-sm sm:text-lg whitespace-nowrap">{formatCurrency(store.revenue)}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

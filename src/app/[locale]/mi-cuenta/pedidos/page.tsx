@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   Package,
@@ -14,78 +14,9 @@ import {
   ChevronRight,
   Search,
   Filter,
+  Loader2,
 } from 'lucide-react'
-
-const STATS = [
-  { label: 'Pedidos Totales', value: '12', icon: Package, color: '#0066FF' },
-  { label: 'En Tránsito', value: '2', icon: Truck, color: '#0066FF' },
-  { label: 'Reseñas Pendientes', value: '3', icon: Star, color: '#0066FF' },
-  { label: 'Favoritos', value: '24', icon: Heart, color: '#0066FF' },
-]
-
-const ORDERS = [
-  {
-    id: 'NXM-2026-03-7F8A2D4E',
-    date: '12 de marzo, 2026',
-    total: 1299.99,
-    status: 'Entregado',
-    items: [
-      { name: 'MacBook Pro 14" M3', qty: 1, price: 1299.99, img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&h=80&fit=crop' },
-    ],
-    timeline: [
-      { step: 'Confirmado', date: '10 Mar', completed: true },
-      { step: 'Preparando', date: '10 Mar', completed: true },
-      { step: 'Enviado', date: '11 Mar', completed: true },
-      { step: 'Entregado', date: '12 Mar', completed: true },
-    ],
-  },
-  {
-    id: 'NXM-2026-02-3B9C1E6F',
-    date: '10 de marzo, 2026',
-    total: 129.99,
-    status: 'En Tránsito',
-    items: [
-      { name: 'AirPods Pro 2ª Gen', qty: 1, price: 129.99, img: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=80&h=80&fit=crop' },
-    ],
-    timeline: [
-      { step: 'Confirmado', date: '8 Mar', completed: true },
-      { step: 'Preparando', date: '9 Mar', completed: true },
-      { step: 'Enviado', date: '10 Mar', completed: true },
-      { step: 'Entregado', date: 'Est. 13 Mar', completed: false },
-    ],
-  },
-  {
-    id: 'NXM-2026-01-A4D7F832',
-    date: '8 de marzo, 2026',
-    total: 399.99,
-    status: 'Entregado',
-    items: [
-      { name: 'PlayStation 5 Slim', qty: 1, price: 399.99, img: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=80&h=80&fit=crop' },
-    ],
-    timeline: [
-      { step: 'Confirmado', date: '5 Mar', completed: true },
-      { step: 'Preparando', date: '5 Mar', completed: true },
-      { step: 'Enviado', date: '6 Mar', completed: true },
-      { step: 'Entregado', date: '8 Mar', completed: true },
-    ],
-  },
-  {
-    id: 'NXM-2025-12-6E1C9B5A',
-    date: '5 de marzo, 2026',
-    total: 249.98,
-    status: 'En Proceso',
-    items: [
-      { name: 'Teclado Mecánico RGB', qty: 1, price: 149.99, img: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=80&h=80&fit=crop' },
-      { name: 'Ratón Gaming Pro', qty: 1, price: 99.99, img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80&h=80&fit=crop' },
-    ],
-    timeline: [
-      { step: 'Confirmado', date: '5 Mar', completed: true },
-      { step: 'Preparando', date: 'En curso', completed: false },
-      { step: 'Enviado', date: '—', completed: false },
-      { step: 'Entregado', date: '—', completed: false },
-    ],
-  },
-]
+import { Button } from '@/components/ui/button'
 
 const TABS = [
   { label: 'Todos', value: null },
@@ -98,6 +29,40 @@ const statusStyles: Record<string, string> = {
   'Entregado': 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
   'En Tránsito': 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
   'En Proceso': 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+  'Cancelado': 'bg-red-500/20 text-red-400 border border-red-500/30',
+  'Reembolsado': 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+}
+
+interface OrderItem {
+  name: string
+  qty: number
+  price: number
+  img: string
+}
+
+interface TimelineStep {
+  step: string
+  date: string
+  completed: boolean
+}
+
+interface Order {
+  id: string
+  date: string
+  total: number
+  status: string
+  items: OrderItem[]
+  timeline: TimelineStep[]
+}
+
+interface OrdersData {
+  stats: {
+    totalOrders: number
+    inTransit: number
+    pendingReviews: number
+    favorites: number
+  }
+  orders: Order[]
 }
 
 export default function PedidosPage() {
@@ -107,8 +72,54 @@ export default function PedidosPage() {
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [data, setData] = useState<OrdersData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredOrders = ORDERS.filter((order) => {
+  useEffect(() => {
+    fetch('/api/mi-cuenta/pedidos')
+      .then((r) => {
+        if (!r.ok) throw new Error('Error al cargar pedidos')
+        return r.json()
+      })
+      .then(setData)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#0066FF' }} />
+          <p className="text-sm" style={{ color: '#4A4A4A' }}>Cargando pedidos...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-semibold" style={{ color: '#000000' }}>Error al cargar pedidos</p>
+          <p className="text-sm mt-2" style={{ color: '#4A4A4A' }}>{error || 'No se pudieron obtener los datos'}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4" style={{ backgroundColor: '#0066FF', color: 'white' }}>
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const STATS = [
+    { label: 'Pedidos Totales', value: String(data.stats.totalOrders), icon: Package, color: '#0066FF' },
+    { label: 'En Tránsito', value: String(data.stats.inTransit), icon: Truck, color: '#0066FF' },
+    { label: 'Reseñas Pendientes', value: String(data.stats.pendingReviews), icon: Star, color: '#0066FF' },
+    { label: 'Favoritos', value: String(data.stats.favorites), icon: Heart, color: '#0066FF' },
+  ]
+
+  const filteredOrders = data.orders.filter((order) => {
     const matchesStatus = selectedStatus ? order.status === selectedStatus : true
     const matchesSearch = searchQuery
       ? order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -1,85 +1,54 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, MoreVertical, Edit2, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, MoreVertical, Edit2, Trash2, Eye, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const PRODUCTS = [
-  {
-    id: 1,
-    name: 'MacBook Pro 14"',
-    price: 1299.99,
-    stock: 12,
-    status: 'Activo',
-    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&h=80&fit=crop',
-    sales: 45,
-  },
-  {
-    id: 2,
-    name: 'AirPods Pro',
-    price: 249.99,
-    stock: 34,
-    status: 'Activo',
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=80&h=80&fit=crop',
-    sales: 78,
-  },
-  {
-    id: 3,
-    name: 'iPhone 15 Pro',
-    price: 999.99,
-    stock: 8,
-    status: 'Stock Bajo',
-    image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=80&h=80&fit=crop',
-    sales: 32,
-  },
-  {
-    id: 4,
-    name: 'iPad Air',
-    price: 599.99,
-    stock: 0,
-    status: 'Agotado',
-    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=80&h=80&fit=crop',
-    sales: 15,
-  },
-  {
-    id: 5,
-    name: 'Apple Watch Series 9',
-    price: 399.99,
-    stock: 22,
-    status: 'Activo',
-    image: 'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=80&h=80&fit=crop',
-    sales: 28,
-  },
-  {
-    id: 6,
-    name: 'Magic Keyboard',
-    price: 299.99,
-    stock: 45,
-    status: 'Activo',
-    image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=80&h=80&fit=crop',
-    sales: 12,
-  },
-];
 
 const STATUS_COLORS: Record<string, { badge: string; dot: string }> = {
   'Activo': { badge: 'bg-green-50 text-green-700 border border-green-200', dot: 'bg-green-500' },
   'Stock Bajo': { badge: 'bg-yellow-50 text-yellow-700 border border-yellow-200', dot: 'bg-yellow-500' },
   'Agotado': { badge: 'bg-red-50 text-red-700 border border-red-200', dot: 'bg-red-500' },
+  'Pausado': { badge: 'bg-gray-50 text-gray-700 border border-gray-200', dot: 'bg-gray-500' },
+  'Borrador': { badge: 'bg-purple-50 text-purple-700 border border-purple-200', dot: 'bg-purple-500' },
 };
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  status: string;
+  image: string;
+  sales: number;
+}
 
 export default function ProductosPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
-  const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
-  const [editingProduct, setEditingProduct] = useState<number | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'edit' | 'delete'; message: string } | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredProducts = PRODUCTS.filter(product =>
+  useEffect(() => {
+    fetch('/api/vendedor/productos')
+      .then((r) => {
+        if (!r.ok) throw new Error('Error al cargar productos');
+        return r.json();
+      })
+      .then((data) => setProducts(data.products || []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (productId: number) => {
+  const handleEdit = (productId: string) => {
     setEditingProduct(productId);
     setFeedback({ type: 'edit', message: 'Abriendo editor del producto...' });
     setTimeout(() => {
@@ -88,11 +57,11 @@ export default function ProductosPage() {
     }, 1500);
   };
 
-  const handleDeleteClick = (productId: number) => {
+  const handleDeleteClick = (productId: string) => {
     setDeleteConfirmation(productId);
   };
 
-  const handleConfirmDelete = (productId: number) => {
+  const handleConfirmDelete = (productId: string) => {
     setFeedback({ type: 'delete', message: 'Eliminando producto...' });
     setTimeout(() => {
       setDeleteConfirmation(null);
@@ -104,6 +73,31 @@ export default function ProductosPage() {
   const handleCancelDelete = () => {
     setDeleteConfirmation(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#0066FF' }} />
+          <p className="text-sm" style={{ color: '#4A4A4A' }}>Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-semibold" style={{ color: '#000000' }}>Error al cargar productos</p>
+          <p className="text-sm mt-2" style={{ color: '#4A4A4A' }}>{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4" style={{ backgroundColor: '#0066FF', color: 'white' }}>
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-8">
@@ -173,8 +167,8 @@ export default function ProductosPage() {
                 </button>
                 {/* Status Overlay */}
                 <div className="absolute top-3 left-3">
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-semibold text-xs ${STATUS_COLORS[product.status].badge}`}>
-                    <div className={`h-2 w-2 rounded-full ${STATUS_COLORS[product.status].dot}`} />
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-semibold text-xs ${(STATUS_COLORS[product.status] || STATUS_COLORS['Activo']).badge}`}>
+                    <div className={`h-2 w-2 rounded-full ${(STATUS_COLORS[product.status] || STATUS_COLORS['Activo']).dot}`} />
                     {product.status}
                   </div>
                 </div>
@@ -268,8 +262,8 @@ export default function ProductosPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full ${STATUS_COLORS[product.status].dot}`} />
-                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[product.status].badge}`}>
+                        <div className={`h-2 w-2 rounded-full ${(STATUS_COLORS[product.status] || STATUS_COLORS['Activo']).dot}`} />
+                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${(STATUS_COLORS[product.status] || STATUS_COLORS['Activo']).badge}`}>
                           {product.status}
                         </span>
                       </div>
@@ -300,6 +294,15 @@ export default function ProductosPage() {
               </tbody>
             </table>
           </div>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {filteredProducts.length === 0 && !loading && (
+        <Card className="border border-gray-200 p-8 text-center" style={{ boxShadow: '0 2px 40px rgba(0,0,0,0.04)' }}>
+          <p style={{ color: '#4A4A4A' }} className="text-lg">
+            {searchQuery ? 'No se encontraron productos' : 'No tienes productos aún'}
+          </p>
         </Card>
       )}
 

@@ -1,60 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Printer, Eye, MoreVertical, CheckCircle, Truck, Clock, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Printer, Eye, MoreVertical, CheckCircle, Truck, Clock, Download, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const ORDERS = [
-  {
-    id: 'NXM-2026-03-7F8A2D4E',
-    customer: 'Ana García',
-    products: 'MacBook Pro 14"',
-    total: '1,299.99€',
-    status: 'En Preparación',
-    date: '2024-03-12',
-  },
-  {
-    id: 'NXM-2026-03-3B9C1E6F',
-    customer: 'Carlos López',
-    products: 'AirPods Pro x 2',
-    total: '499.98€',
-    status: 'Enviado',
-    date: '2024-03-11',
-  },
-  {
-    id: 'NXM-2026-02-A4D7F832',
-    customer: 'María Rodríguez',
-    products: 'iPhone 15 Pro',
-    total: '999.99€',
-    status: 'Entregado',
-    date: '2024-03-10',
-  },
-  {
-    id: 'NXM-2026-02-6E1C9B5A',
-    customer: 'Juan Pérez',
-    products: 'iPad Air, Magic Keyboard',
-    total: '899.98€',
-    status: 'En Preparación',
-    date: '2024-03-09',
-  },
-  {
-    id: 'NXM-2026-01-D2F4A8E3',
-    customer: 'Laura Sánchez',
-    products: 'Apple Watch Series 9',
-    total: '399.99€',
-    status: 'Enviado',
-    date: '2024-03-08',
-  },
-  {
-    id: 'NXM-2026-01-9C3B7D1F',
-    customer: 'Roberto García',
-    products: 'MacBook Pro 14" x 3',
-    total: '3,899.97€',
-    status: 'Entregado',
-    date: '2024-03-07',
-  },
-];
 
 const STATUS_CONFIG: Record<string, { badge: string; dot: string; icon: React.ReactNode }> = {
   'En Preparación': {
@@ -72,15 +21,47 @@ const STATUS_CONFIG: Record<string, { badge: string; dot: string; icon: React.Re
     dot: 'bg-green-500',
     icon: <CheckCircle className="h-4 w-4" />
   },
+  'Cancelado': {
+    badge: 'bg-red-50 text-red-700 border border-red-200',
+    dot: 'bg-red-500',
+    icon: <Clock className="h-4 w-4" />
+  },
+};
+
+interface Order {
+  id: string;
+  customer: string;
+  products: string;
+  total: number;
+  status: string;
+  date: string;
+}
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 };
 
 export default function PedidosPage() {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/vendedor/pedidos')
+      .then((r) => {
+        if (!r.ok) throw new Error('Error al cargar pedidos');
+        return r.json();
+      })
+      .then((data) => setOrders(data.orders || []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredOrders = selectedStatus
-    ? ORDERS.filter(order => order.status === selectedStatus)
-    : ORDERS;
+    ? orders.filter(order => order.status === selectedStatus)
+    : orders;
 
   const statuses = ['En Preparación', 'Enviado', 'Entregado'];
 
@@ -108,6 +89,31 @@ export default function PedidosPage() {
     }, 800);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#0066FF' }} />
+          <p className="text-sm" style={{ color: '#4A4A4A' }}>Cargando pedidos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-semibold" style={{ color: '#000000' }}>Error al cargar pedidos</p>
+          <p className="text-sm mt-2" style={{ color: '#4A4A4A' }}>{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4" style={{ backgroundColor: '#0066FF', color: 'white' }}>
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-8">
       {/* Header */}
@@ -133,12 +139,12 @@ export default function PedidosPage() {
           }}
         >
           <p className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide">Todos</p>
-          <p className="mt-2 text-2xl sm:text-3xl font-bold" style={{ color: '#000000' }}>{ORDERS.length}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold" style={{ color: '#000000' }}>{orders.length}</p>
         </Card>
 
         {/* Status Filters */}
         {statuses.map(status => {
-          const count = ORDERS.filter(o => o.status === status).length;
+          const count = orders.filter(o => o.status === status).length;
           const config = STATUS_CONFIG[status];
           return (
             <Card
@@ -188,11 +194,11 @@ export default function PedidosPage() {
                   <td className="px-6 py-4 font-semibold" style={{ color: '#0066FF' }}>{order.id}</td>
                   <td className="px-6 py-4 font-medium" style={{ color: '#000000' }}>{order.customer}</td>
                   <td className="px-6 py-4" style={{ color: '#4A4A4A' }}>{order.products}</td>
-                  <td className="px-6 py-4 font-bold" style={{ color: '#000000' }}>{order.total}</td>
+                  <td className="px-6 py-4 font-bold" style={{ color: '#000000' }}>{formatCurrency(order.total)}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className={`h-2 w-2 rounded-full ${STATUS_CONFIG[order.status].dot}`} />
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${STATUS_CONFIG[order.status].badge}`}>
+                      <div className={`h-2 w-2 rounded-full ${(STATUS_CONFIG[order.status] || STATUS_CONFIG['En Preparación']).dot}`} />
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${(STATUS_CONFIG[order.status] || STATUS_CONFIG['En Preparación']).badge}`}>
                         {order.status}
                       </span>
                     </div>
@@ -233,7 +239,7 @@ export default function PedidosPage() {
       {/* Empty State */}
       {filteredOrders.length === 0 && (
         <Card className="border border-gray-200 p-8 text-center" style={{ boxShadow: '0 2px 40px rgba(0,0,0,0.04)' }}>
-          <p style={{ color: '#4A4A4A' }} className="text-lg">No hay pedidos con este estado</p>
+          <p style={{ color: '#4A4A4A' }} className="text-lg">No hay pedidos {selectedStatus ? `con estado "${selectedStatus}"` : ''}</p>
         </Card>
       )}
 
