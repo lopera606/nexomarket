@@ -25,7 +25,7 @@ function mapRole(backendRole: string | undefined): 'comprador' | 'vendedor' | 'a
 }
 
 export function useAuth() {
-  const { data: session, status, update } = useSession();
+  const { data: session, status } = useSession();
   const [registerError, setRegisterError] = useState<string | null>(null);
 
   const isLoading = status === 'loading';
