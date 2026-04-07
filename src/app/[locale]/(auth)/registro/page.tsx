@@ -56,9 +56,8 @@ export default function RegistroPage() {
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const result = registerUser({
+    const result = await registerUser({
       name: nombre,
       email,
       password,

@@ -20,10 +20,7 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const result = login(email, password);
+    const result = await login(email, password);
     setIsLoading(false);
 
     if (result.success) {

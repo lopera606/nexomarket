@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /categorias
+Allow: /productos
+Allow: /ofertas
+Allow: /buscar
+Allow: /sobre-nosotros
+Allow: /ayuda
+
+Disallow: /api/
+Disallow: /vendedor/
+Disallow: /admin/
+Disallow: /mi-cuenta/
+
+Sitemap: https://nexomarket.vercel.app/sitemap.xml

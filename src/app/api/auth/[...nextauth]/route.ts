@@ -1,8 +1,7 @@
-import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { handlers, handler } from "@/lib/auth";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const handler: any = NextAuth(authOptions);
+// Support both NextAuth v4 (handler is a function) and v5 (handlers.GET/POST)
+const GET = handlers?.GET || handler;
+const POST = handlers?.POST || handler;
 
-export const GET = handler;
-export const POST = handler;
+export { GET, POST };

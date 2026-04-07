@@ -39,8 +39,8 @@ export default function Topbar() {
   const langRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setAccountMenuOpen(false)
     router.push(localePath('/'))
   }

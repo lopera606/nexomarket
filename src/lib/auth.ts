@@ -45,7 +45,7 @@ export const authOptions: any = {
     async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
-        token.role = user.role || "buyer";
+        token.role = user.role || "CUSTOMER";
       }
       return token;
     },
@@ -58,8 +58,8 @@ export const authOptions: any = {
     },
   },
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
@@ -67,4 +67,8 @@ export const authOptions: any = {
   },
 };
 
-export const handler = NextAuth(authOptions);
+const nextAuth = NextAuth(authOptions);
+
+export const handlers = (nextAuth as any).handlers || nextAuth;
+export const auth = (nextAuth as any).auth;
+export const handler = nextAuth;
