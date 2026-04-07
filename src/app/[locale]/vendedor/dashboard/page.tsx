@@ -58,7 +58,7 @@ export default function SellerDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/vendedor/dashboard')
+    fetch('/api/v2/vendedor/dashboard')
       .then((r) => {
         if (!r.ok) throw new Error('Error al cargar datos');
         return r.json();

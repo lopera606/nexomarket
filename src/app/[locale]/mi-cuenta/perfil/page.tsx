@@ -29,7 +29,7 @@ export default function PerfilPage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await fetch('/api/mi-cuenta/perfil');
+        const res = await fetch('/api/v2/mi-cuenta/perfil');
         if (res.ok) {
           const data = await res.json();
           setProfile({
@@ -53,7 +53,7 @@ export default function PerfilPage() {
     setIsSaving(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/mi-cuenta/perfil', {
+      const res = await fetch('/api/v2/mi-cuenta/perfil', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

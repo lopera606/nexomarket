@@ -43,7 +43,7 @@ export function useNotifications() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch('/api/notificaciones');
+      const res = await fetch('/api/v2/notificaciones');
       if (!res.ok) {
         setNotifications([]);
         return;
@@ -77,7 +77,7 @@ export function useNotifications() {
       prev.map(n => (n.id === id ? { ...n, read: true } : n))
     );
     try {
-      await fetch('/api/notificaciones', {
+      await fetch('/api/v2/notificaciones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
@@ -90,7 +90,7 @@ export function useNotifications() {
   const markAllAsRead = useCallback(async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     try {
-      await fetch('/api/notificaciones', {
+      await fetch('/api/v2/notificaciones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true }),

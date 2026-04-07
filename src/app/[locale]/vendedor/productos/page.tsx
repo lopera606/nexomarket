@@ -34,7 +34,7 @@ export default function ProductosPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/vendedor/productos')
+    fetch('/api/v2/vendedor/productos')
       .then((r) => {
         if (!r.ok) throw new Error('Error al cargar productos');
         return r.json();

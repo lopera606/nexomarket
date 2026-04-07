@@ -55,7 +55,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/dashboard')
+    fetch('/api/v2/admin-dashboard')
       .then((r) => {
         if (!r.ok) throw new Error('Error al cargar datos');
         return r.json();

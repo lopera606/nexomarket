@@ -54,7 +54,7 @@ export default function UsersPage() {
         if (role) params.set('role', role);
         if (searchTerm) params.set('search', searchTerm);
 
-        const res = await fetch(`/api/admin/users?${params.toString()}`);
+        const res = await fetch(`/api/v2/admin-users?${params.toString()}`);
         if (res.ok) {
           setUsers(await res.json());
         }

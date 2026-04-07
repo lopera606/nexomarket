@@ -37,7 +37,7 @@ export default function OrdersPage() {
         const params = new URLSearchParams();
         if (searchTerm) params.set('search', searchTerm);
         if (statusFilter) params.set('status', statusFilter);
-        const res = await fetch(`/api/admin/orders?${params.toString()}`);
+        const res = await fetch(`/api/v2/admin-orders?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setOrders(data.orders || []);

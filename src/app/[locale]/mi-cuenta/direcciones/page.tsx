@@ -42,7 +42,7 @@ export default function DireccionesPage() {
 
   const loadAddresses = async () => {
     try {
-      const res = await fetch('/api/mi-cuenta/direcciones');
+      const res = await fetch('/api/v2/mi-cuenta/direcciones');
       if (res.ok) {
         setAddresses(await res.json());
       }
@@ -60,7 +60,7 @@ export default function DireccionesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Estas seguro de eliminar esta direccion?')) return;
     try {
-      const res = await fetch(`/api/mi-cuenta/direcciones?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/v2/mi-cuenta/direcciones?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         setAddresses(addresses.filter(addr => addr.id !== id));
         setMessage({ type: 'success', text: 'Direccion eliminada' });
@@ -73,7 +73,7 @@ export default function DireccionesPage() {
 
   const handleSetDefault = async (id: string) => {
     try {
-      const res = await fetch('/api/mi-cuenta/direcciones', {
+      const res = await fetch('/api/v2/mi-cuenta/direcciones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, isDefault: true }),
@@ -91,7 +91,7 @@ export default function DireccionesPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/mi-cuenta/direcciones', {
+      const res = await fetch('/api/v2/mi-cuenta/direcciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

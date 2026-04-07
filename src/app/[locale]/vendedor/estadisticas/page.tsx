@@ -33,7 +33,7 @@ export default function EstadisticasPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/vendedor/estadisticas');
+        const res = await fetch('/api/v2/vendedor/estadisticas');
         if (res.ok) {
           const json = await res.json();
           setData(json);

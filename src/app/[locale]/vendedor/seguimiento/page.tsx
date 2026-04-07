@@ -65,7 +65,7 @@ export default function SeguimientoPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/vendedor/seguimiento');
+        const res = await fetch('/api/v2/vendedor/seguimiento');
         if (res.ok) {
           const data = await res.json();
           setShipments(data.shipments || []);

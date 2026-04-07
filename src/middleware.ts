@@ -24,8 +24,8 @@ function getClientIp(request: NextRequest): string {
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Always allow static files and API
-  if (pathname.match(/\.\w+$/) || pathname.startsWith("/api/")) {
+  // Always allow static files, API, sitemap, robots
+  if (pathname.match(/\.\w+$/) || pathname.startsWith("/api/") || pathname === "/sitemap.xml" || pathname === "/robots.txt") {
     return NextResponse.next();
   }
 

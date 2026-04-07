@@ -33,7 +33,7 @@ export default function ProductsPage() {
       try {
         const params = new URLSearchParams();
         if (searchTerm) params.set('search', searchTerm);
-        const res = await fetch(`/api/admin/products?${params.toString()}`);
+        const res = await fetch(`/api/v2/admin-products?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setProducts(data.products || []);

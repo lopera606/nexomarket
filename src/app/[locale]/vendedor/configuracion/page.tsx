@@ -37,7 +37,7 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     async function loadStore() {
       try {
-        const res = await fetch('/api/vendedor/configuracion');
+        const res = await fetch('/api/v2/vendedor/configuracion');
         if (res.ok) {
           const data = await res.json();
           setStore({
@@ -77,7 +77,7 @@ export default function ConfiguracionPage() {
     setSaveStatus('saving');
     setMessage(null);
     try {
-      const res = await fetch('/api/vendedor/configuracion', {
+      const res = await fetch('/api/v2/vendedor/configuracion', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

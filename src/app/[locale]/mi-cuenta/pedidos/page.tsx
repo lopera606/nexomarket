@@ -77,7 +77,7 @@ export default function PedidosPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/mi-cuenta/pedidos')
+    fetch('/api/v2/mi-cuenta/pedidos')
       .then((r) => {
         if (!r.ok) throw new Error('Error al cargar pedidos')
         return r.json()

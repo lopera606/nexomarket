@@ -33,7 +33,7 @@ export default function ReseniasPage() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch('/api/vendedor/resenas');
+        const res = await fetch('/api/v2/vendedor/resenas');
         if (res.ok) {
           const data = await res.json();
           setReviews(data.reviews || []);

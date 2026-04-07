@@ -35,7 +35,7 @@ export default function MensajesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/vendedor/mensajes')
+        const res = await fetch('/api/v2/vendedor/mensajes')
         if (res.ok) {
           const data = await res.json()
           const convos = data.conversations || []

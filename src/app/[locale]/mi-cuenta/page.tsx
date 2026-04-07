@@ -29,8 +29,8 @@ export default function MiCuentaPage() {
     async function loadData() {
       try {
         const [profileRes, ordersRes] = await Promise.all([
-          fetch('/api/mi-cuenta/perfil'),
-          fetch('/api/mi-cuenta/pedidos?limit=5'),
+          fetch('/api/v2/mi-cuenta/perfil'),
+          fetch('/api/v2/mi-cuenta/pedidos?limit=5'),
         ]);
 
         if (profileRes.ok) {

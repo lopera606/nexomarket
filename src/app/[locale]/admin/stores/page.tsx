@@ -51,7 +51,7 @@ export default function StoresPage() {
         if (statusFilter !== 'Todos') params.set('status', statusFilter);
         if (searchTerm) params.set('search', searchTerm);
 
-        const res = await fetch(`/api/admin/stores?${params.toString()}`);
+        const res = await fetch(`/api/v2/admin-stores?${params.toString()}`);
         if (res.ok) {
           setStores(await res.json());
         }
@@ -68,7 +68,7 @@ export default function StoresPage() {
   const handleStatusChange = async (storeId: string, newStatus: string) => {
     setActionLoading(storeId);
     try {
-      const res = await fetch('/api/admin/stores', {
+      const res = await fetch('/api/v2/admin-stores', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: storeId, status: newStatus }),

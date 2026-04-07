@@ -55,7 +55,7 @@ export default function StoreHealthPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/vendedor/salud');
+        const res = await fetch('/api/v2/vendedor/salud');
         if (res.ok) {
           const data = await res.json();
           if (data.overallScore !== undefined) setHealth(data);

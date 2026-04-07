@@ -33,7 +33,7 @@ export default function ReviewsPage() {
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
       if (ratingFilter !== 'Todos') params.set('rating', ratingFilter);
-      const res = await fetch(`/api/admin/reviews?${params.toString()}`);
+      const res = await fetch(`/api/v2/admin-reviews?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setReviews(data.reviews || []);
@@ -51,7 +51,7 @@ export default function ReviewsPage() {
 
   const handleModerate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const res = await fetch('/api/admin/reviews', {
+      const res = await fetch('/api/v2/admin-reviews', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),

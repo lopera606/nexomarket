@@ -33,7 +33,7 @@ export default function IngresosPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/vendedor/ingresos?period=${period}`)
+    fetch(`/api/v2/vendedor/ingresos?period=${period}`)
       .then((r) => {
         if (!r.ok) throw new Error('Error al cargar datos');
         return r.json();
