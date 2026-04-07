@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authenticateApiKey, apiResponse } from "@/lib/api-auth";
+import { createNotification } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -157,6 +158,21 @@ export async function POST(
 
         },
       });
+
+      // Notify customer about shipment
+      const orderForNotif = await db.order.findFirst({
+        where: { subOrders: { some: { id } } },
+        select: { customerId: true },
+      });
+      if (orderForNotif) {
+        createNotification(
+          orderForNotif.customerId,
+          "ORDER_UPDATE",
+          "Pedido enviado",
+          `Tu pedido ${subOrder.subOrderNumber} ha sido enviado con ${body.carrier}. Numero de seguimiento: ${body.trackingNumber}`,
+          `/es/mi-cuenta/pedidos`
+        ).catch(() => {});
+      }
 
       return NextResponse.json(
         apiResponse(true, {

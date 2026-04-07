@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Calendar, MoreVertical, Package, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Calendar, MoreVertical, Package, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -9,88 +9,78 @@ interface Order {
   customer: string;
   items: number;
   total: number;
-  status: 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado';
+  currency: string;
+  status: string;
   date: string;
 }
 
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'NXM-2026-03-7F8A2D4E',
-    customer: 'María García',
-    items: 3,
-    total: 156.50,
-    status: 'Completado',
-    date: '2025-03-10',
-  },
-  {
-    id: '2',
-    orderNumber: 'NXM-2026-03-3B9C1E6F',
-    customer: 'Juan López',
-    items: 1,
-    total: 89.99,
-    status: 'En proceso',
-    date: '2025-03-12',
-  },
-  {
-    id: '3',
-    orderNumber: 'NXM-2026-02-A4D7F832',
-    customer: 'Ana Rodríguez',
-    items: 5,
-    total: 234.75,
-    status: 'Pendiente',
-    date: '2025-03-14',
-  },
-  {
-    id: '4',
-    orderNumber: 'NXM-2026-02-6E1C9B5A',
-    customer: 'Carlos Martínez',
-    items: 2,
-    total: 128.00,
-    status: 'Completado',
-    date: '2025-03-13',
-  },
-  {
-    id: '5',
-    orderNumber: 'NXM-2026-01-D2F4A8E3',
-    customer: 'Laura Sánchez',
-    items: 4,
-    total: 456.80,
-    status: 'En proceso',
-    date: '2025-03-11',
-  },
-];
+const STATUS_MAP: Record<string, string> = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmado',
+  PARTIALLY_SHIPPED: 'Parcialmente enviado',
+  SHIPPED: 'Enviado',
+  DELIVERED: 'Completado',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Reembolsado',
+};
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  const [orders] = useState(mockOrders);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('search', searchTerm);
+        if (statusFilter) params.set('status', statusFilter);
+        const res = await fetch(`/api/admin/orders?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders || []);
+        }
+      } catch {
+        console.error('Error fetching orders');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [searchTerm, statusFilter]);
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
+    if (dateFilter) {
+      const orderDate = order.date.substring(0, 10);
+      if (orderDate !== dateFilter) return false;
+    }
+    return true;
   });
+
+  const statusLabel = (s: string) => STATUS_MAP[s] || s;
 
   // Calculate stats
   const stats = {
     total: orders.length,
-    pending: orders.filter((o) => o.status === 'Pendiente').length,
-    inProcess: orders.filter((o) => o.status === 'En proceso').length,
-    completed: orders.filter((o) => o.status === 'Completado').length,
+    pending: orders.filter((o) => o.status === 'PENDING').length,
+    inProcess: orders.filter((o) => ['CONFIRMED', 'PARTIALLY_SHIPPED', 'SHIPPED'].includes(o.status)).length,
+    completed: orders.filter((o) => o.status === 'DELIVERED').length,
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Completado':
+      case 'DELIVERED':
         return 'bg-green-50 text-green-700';
-      case 'En proceso':
+      case 'CONFIRMED':
+      case 'PARTIALLY_SHIPPED':
+      case 'SHIPPED':
         return 'bg-blue-50 text-blue-700';
-      case 'Pendiente':
+      case 'PENDING':
         return 'bg-amber-50 text-amber-700';
-      case 'Cancelado':
+      case 'CANCELLED':
+      case 'REFUNDED':
         return 'bg-red-50 text-red-700';
       default:
         return 'bg-gray-50 text-gray-700';
@@ -99,18 +89,29 @@ export default function OrdersPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Completado':
+      case 'DELIVERED':
         return <CheckCircle2 className="h-4 w-4" />;
-      case 'En proceso':
+      case 'CONFIRMED':
+      case 'PARTIALLY_SHIPPED':
+      case 'SHIPPED':
         return <Clock className="h-4 w-4" />;
-      case 'Pendiente':
+      case 'PENDING':
         return <Package className="h-4 w-4" />;
-      case 'Cancelado':
+      case 'CANCELLED':
+      case 'REFUNDED':
         return <AlertCircle className="h-4 w-4" />;
       default:
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0066FF]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -118,7 +119,7 @@ export default function OrdersPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Gestión de Pedidos
+            Gestion de Pedidos
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
             Total: {filteredOrders.length} pedidos
@@ -144,7 +145,7 @@ export default function OrdersPage() {
             {stats.pending}
           </p>
           <p className="text-[10px] sm:text-xs text-gray-500 mt-2">
-            Esperando confirmación
+            Esperando confirmacion
           </p>
         </div>
 
@@ -180,7 +181,7 @@ export default function OrdersPage() {
             <Search className="absolute left-3 top-2.5 h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
             <input
               type="text"
-              placeholder="Buscar por número o cliente..."
+              placeholder="Buscar por numero o cliente..."
               className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -199,71 +200,63 @@ export default function OrdersPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
-        <table className="w-full min-w-[700px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Pedido
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Cliente
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Artículos
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Total
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Estado
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Fecha
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filteredOrders.map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
-                  {order.orderNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                  {order.customer}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                  {order.items} art.
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
-                  €{order.total.toFixed(2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                      order.status
-                    )}`}
-                  >
-                    {getStatusIcon(order.status)}
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
-                  {new Date(order.date).toLocaleDateString('es-ES')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <MoreVertical className="h-5 w-5 text-gray-600" />
-                  </button>
-                </td>
+      {filteredOrders.length === 0 ? (
+        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
+          <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Sin pedidos</h2>
+          <p className="text-gray-500">No se encontraron pedidos con los filtros seleccionados.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Pedido</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Cliente</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Articulos</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Total</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Fecha</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredOrders.map((order) => (
+                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                    {order.orderNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {order.customer}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {order.items} art.
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                    ${order.total.toFixed(2)} {order.currency}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}
+                    >
+                      {getStatusIcon(order.status)}
+                      {statusLabel(order.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
+                    {new Date(order.date).toLocaleDateString('es-ES')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                      <MoreVertical className="h-5 w-5 text-gray-600" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

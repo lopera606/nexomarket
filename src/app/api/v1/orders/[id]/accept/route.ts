@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authenticateApiKey, apiResponse } from "@/lib/api-auth";
+import { createNotification } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,22 @@ export async function POST(
         },
       },
     });
+
+    // Notify customer that their order was accepted
+    const customer = acceptedSubOrder.order.customer;
+    const order = await db.order.findFirst({
+      where: { subOrders: { some: { id } } },
+      select: { customerId: true },
+    });
+    if (order) {
+      createNotification(
+        order.customerId,
+        "ORDER_UPDATE",
+        "Pedido aceptado",
+        `Tu sub-pedido ${acceptedSubOrder.subOrderNumber} ha sido aceptado por el vendedor y está siendo preparado.`,
+        `/es/mi-cuenta/pedidos`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(
       apiResponse(true, {

@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { db } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 requests per 15 min per IP
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const { success } = rateLimit(`register:${ip}`, 5, 15 * 60 * 1000);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes. Intenta de nuevo en 15 minutos." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, password, firstName, lastName, role, storeName } = body;
 
@@ -82,6 +94,15 @@ export async function POST(request: NextRequest) {
 
     // Fire and forget - don't block the response
     sendWelcomeEmail(user.email, user.firstName).catch(() => {});
+
+    // Create welcome notification
+    createNotification(
+      user.id,
+      "SYSTEM",
+      "Bienvenido a NexoMarket",
+      `Hola ${user.firstName}, tu cuenta ha sido creada exitosamente. Explora nuestro marketplace y encuentra los mejores productos.`,
+      `/${user.locale || "es"}`
+    ).catch(() => {});
 
     return NextResponse.json(
       {

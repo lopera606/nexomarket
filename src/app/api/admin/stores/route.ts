@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   try {
@@ -108,8 +109,27 @@ export async function PUT(request: NextRequest) {
         id: true,
         name: true,
         status: true,
+        ownerId: true,
       },
     });
+
+    // Notify seller about store status change
+    if (status === "ACTIVE") {
+      createNotification(
+        store.ownerId,
+        "SYSTEM",
+        "Tienda aprobada",
+        `Tu tienda "${store.name}" ha sido aprobada. Ya puedes empezar a vender en NexoMarket.`,
+        `/es/vendedor/dashboard`
+      ).catch(() => {});
+    } else if (status === "SUSPENDED") {
+      createNotification(
+        store.ownerId,
+        "SYSTEM",
+        "Tienda suspendida",
+        `Tu tienda "${store.name}" ha sido suspendida. Contacta soporte para mas informacion.`,
+      ).catch(() => {});
+    }
 
     return NextResponse.json(store);
   } catch (error) {

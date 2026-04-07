@@ -55,15 +55,12 @@ export default function StoreHealthPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // In production, storeId from auth session
-        const [healthRes, penaltiesRes] = await Promise.all([
-          fetch('/api/store/health-score?storeId=current-store-id'),
-          fetch('/api/store/penalties?storeId=current-store-id'),
-        ]);
-        const healthData = await healthRes.json();
-        const penaltiesData = await penaltiesRes.json();
-        if (healthData.overallScore !== undefined) setHealth(healthData);
-        if (penaltiesData.penalties) setPenalties(penaltiesData.penalties);
+        const res = await fetch('/api/vendedor/salud');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.overallScore !== undefined) setHealth(data);
+          if (data.penaltyHistory) setPenalties(data.penaltyHistory);
+        }
       } catch {
         console.error('Error fetching health data');
       } finally {

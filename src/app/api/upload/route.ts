@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    // Rate limit: 20 uploads per hour per user
+    const { success } = rateLimit(`upload:${session.user.id}`, 20, 60 * 60 * 1000);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Demasiadas subidas. Intenta de nuevo en una hora." },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export interface NotificationItem {
   id: string;
@@ -12,76 +12,96 @@ export interface NotificationItem {
   createdAt?: string;
 }
 
-const STORAGE_KEY = 'nexomarket_notifications';
+function mapType(apiType: string): NotificationItem['type'] {
+  switch (apiType) {
+    case 'ORDER_UPDATE': return 'order';
+    case 'MESSAGE': return 'message';
+    case 'PROMO': return 'offer';
+    case 'SYSTEM': return 'system';
+    default: return 'system';
+  }
+}
 
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Tu pedido ha sido entregado',
-    description: 'El pedido NXM-2026-03-7F8A2D4E ha llegado exitosamente.',
-    type: 'order',
-    timeAgo: 'Hace 2 horas',
-    read: false,
-  },
-  {
-    id: '2',
-    title: '¡Gran oferta en Auriculares!',
-    description: 'Descuento de 30% en auriculares inalámbricos de calidad premium.',
-    type: 'offer',
-    timeAgo: 'Hace 1 día',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Nuevo mensaje de TechStore Pro',
-    description: 'El vendedor ha respondido tu consulta sobre el producto.',
-    type: 'message',
-    timeAgo: 'Hace 3 días',
-    read: true,
-  },
-];
+function formatTimeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
-/**
- * Simple notifications hook using localStorage.
- * In production, replace with API calls to /api/notifications.
- */
+  if (diffMins < 1) return 'Ahora';
+  if (diffMins < 60) return `Hace ${diffMins} min`;
+  if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffDays < 30) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+  return date.toLocaleDateString('es-ES');
+}
+
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
-    if (typeof window === 'undefined') return [];
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotifications = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_NOTIFICATIONS;
+      const res = await fetch('/api/notificaciones');
+      if (!res.ok) {
+        setNotifications([]);
+        return;
+      }
+      const data = await res.json();
+      const mapped: NotificationItem[] = (data.notifications || []).map(
+        (n: any) => ({
+          id: n.id,
+          title: n.title,
+          description: n.body || '',
+          type: mapType(n.type),
+          timeAgo: formatTimeAgo(n.createdAt),
+          read: n.isRead,
+          createdAt: n.createdAt,
+        })
+      );
+      setNotifications(mapped);
     } catch {
-      return DEFAULT_NOTIFICATIONS;
+      setNotifications([]);
+    } finally {
+      setLoading(false);
     }
-  });
-
-  const saveToStorage = (items: NotificationItem[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  };
-
-  const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => {
-      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      saveToStorage(updated);
-      return updated;
-    });
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
-      saveToStorage(updated);
-      return updated;
-    });
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const markAsRead = useCallback(async (id: string) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    );
+    try {
+      await fetch('/api/notificaciones', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch {
+      // Optimistic update already applied
+    }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await fetch('/api/notificaciones', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true }),
+      });
+    } catch {
+      // Optimistic update already applied
+    }
   }, []);
 
   const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => {
-      const updated = prev.filter(n => n.id !== id);
-      saveToStorage(updated);
-      return updated;
-    });
+    setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -92,5 +112,6 @@ export function useNotifications() {
     markAsRead,
     markAllAsRead,
     removeNotification,
+    loading,
   };
 }
