@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { db } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,6 +79,9 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // Fire and forget - don't block the response
+    sendWelcomeEmail(user.email, user.firstName).catch(() => {});
 
     return NextResponse.json(
       {

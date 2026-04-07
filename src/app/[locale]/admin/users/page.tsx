@@ -1,102 +1,78 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Filter, MoreVertical, ToggleRight, ToggleLeft, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, ToggleRight, ToggleLeft, Loader2 } from 'lucide-react';
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  avatar: string;
-  role: 'Cliente' | 'Vendedor' | 'Admin';
-  status: boolean;
-  registeredAt: string;
+  role: string;
+  isVerified: boolean;
+  createdAt: string;
+  store?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  _count: {
+    orders: number;
+    reviews: number;
+  };
 }
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'María García López',
-    email: 'maria@example.com',
-    avatar: 'MG',
-    role: 'Cliente',
-    status: true,
-    registeredAt: '2025-01-15',
-  },
-  {
-    id: '2',
-    name: 'Carlos Rodríguez',
-    email: 'carlos@example.com',
-    avatar: 'CR',
-    role: 'Vendedor',
-    status: true,
-    registeredAt: '2025-02-20',
-  },
-  {
-    id: '3',
-    name: 'Ana Martínez',
-    email: 'ana@example.com',
-    avatar: 'AM',
-    role: 'Admin',
-    status: true,
-    registeredAt: '2024-12-10',
-  },
-  {
-    id: '4',
-    name: 'Juan Pérez',
-    email: 'juan@example.com',
-    avatar: 'JP',
-    role: 'Cliente',
-    status: false,
-    registeredAt: '2025-01-05',
-  },
-  {
-    id: '5',
-    name: 'Laura Sánchez',
-    email: 'laura@example.com',
-    avatar: 'LS',
-    role: 'Vendedor',
-    status: true,
-    registeredAt: '2025-03-01',
-  },
-];
-
 type FilterTab = 'Todos' | 'Clientes' | 'Vendedores' | 'Admins';
+
+const roleMap: Record<FilterTab, string | undefined> = {
+  Todos: undefined,
+  Clientes: 'CUSTOMER',
+  Vendedores: 'SELLER',
+  Admins: 'ADMIN',
+};
+
+const roleLabels: Record<string, string> = {
+  CUSTOMER: 'Cliente',
+  SELLER: 'Vendedor',
+  ADMIN: 'Admin',
+};
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterTab>('Todos');
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const filters: FilterTab[] = ['Todos', 'Clientes', 'Vendedores', 'Admins'];
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    async function loadUsers() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        const role = roleMap[activeFilter];
+        if (role) params.set('role', role);
+        if (searchTerm) params.set('search', searchTerm);
 
-    const matchesFilter =
-      activeFilter === 'Todos' ||
-      (activeFilter === 'Clientes' && user.role === 'Cliente') ||
-      (activeFilter === 'Vendedores' && user.role === 'Vendedor') ||
-      (activeFilter === 'Admins' && user.role === 'Admin');
-
-    return matchesSearch && matchesFilter;
-  });
-
-  const toggleStatus = (id: string) => {
-    setUsers(
-      users.map((user) =>
-        user.id === id ? { ...user, status: !user.status } : user
-      )
-    );
-  };
+        const res = await fetch(`/api/admin/users?${params.toString()}`);
+        if (res.ok) {
+          setUsers(await res.json());
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    const timer = setTimeout(loadUsers, searchTerm ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [activeFilter, searchTerm]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'Admin':
+      case 'ADMIN':
         return 'bg-red-50 text-red-700';
-      case 'Vendedor':
+      case 'SELLER':
         return 'bg-blue-50 text-blue-700';
       default:
         return 'bg-gray-50 text-gray-700';
@@ -109,10 +85,10 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Gestión de Usuarios
+            Gestion de Usuarios
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Total: {filteredUsers.length} usuarios
+            Total: {users.length} usuarios
           </p>
         </div>
       </div>
@@ -149,89 +125,75 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
-        <table className="w-full min-w-[500px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Usuario
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Rol
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Registrado
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Estado
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#0066FF] flex items-center justify-center text-white font-semibold text-sm">
-                      {user.avatar}
-                    </div>
-                    <span className="font-medium text-gray-900">
-                      {user.name}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                  {user.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(
-                      user.role
-                    )}`}
-                  >
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
-                  {new Date(user.registeredAt).toLocaleDateString('es-ES')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => toggleStatus(user.id)}
-                    className="flex items-center gap-2 text-sm font-medium"
-                  >
-                    {user.status ? (
-                      <ToggleRight className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <ToggleLeft className="h-5 w-5 text-gray-400" />
-                    )}
-                    <span
-                      className={
-                        user.status
-                          ? 'text-green-700'
-                          : 'text-gray-600'
-                      }
-                    >
-                      {user.status ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <MoreVertical className="h-5 w-5 text-gray-600" />
-                  </button>
-                </td>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-[#0066FF]" />
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white" style={{ boxShadow: '0 2px 60px rgba(0,0,0,0.03)' }}>
+          <table className="w-full min-w-[600px]">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Usuario</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Rol</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Pedidos</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Registrado</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Tienda</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#0066FF] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-900 block">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        {user.isVerified && (
+                          <span className="text-xs text-green-600">Verificado</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
+                    {user.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}>
+                      {roleLabels[user.role] || user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
+                    {user._count.orders}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
+                    {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {user.store ? (
+                      <span className="text-gray-900 font-medium">{user.store.name}</span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    No se encontraron usuarios
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
